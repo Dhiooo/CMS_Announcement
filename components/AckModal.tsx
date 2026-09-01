@@ -14,12 +14,13 @@ export function AckModal({
   onClose: () => void;
 }) {
   const [checked, setChecked] = useState(false);
+  const mustAck = notif.displayBehavior === "until_acknowledged";
   const scheduleText = notif.schedule.date
     ? `${notif.schedule.date}${notif.schedule.time ? ", " + notif.schedule.time : ""} ${notif.schedule.timezone || ""}`
     : notif.schedule.label;
 
   return (
-    <div className="overlay" onClick={onClose}>
+    <div className="overlay" onClick={mustAck ? undefined : onClose}>
       <div className="modal" onClick={(e) => e.stopPropagation()}>
         <div className="modal-pad">
           <div className="modal-head">
@@ -32,10 +33,17 @@ export function AckModal({
               <span className="badge badge-blue">
                 {notif.source.toUpperCase()}
               </span>
+              {notif.updated && (
+                <span className="badge badge-green">
+                  <IconVersion size={13} /> UPDATED
+                </span>
+              )}
             </div>
-            <button className="modal-close" onClick={onClose}>
-              <IconX size={18} />
-            </button>
+            {!mustAck && (
+              <button className="modal-close" onClick={onClose}>
+                <IconX size={18} />
+              </button>
+            )}
           </div>
           <h3>{notif.title}</h3>
           <p

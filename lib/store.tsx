@@ -25,7 +25,7 @@ interface StoreValue {
       note: string;
       resendToReaders: boolean;
     },
-  ) => void;
+  ) => Notification | undefined;
   markReadByUser: (id: string) => void;
   acknowledgeByUser: (id: string) => void;
   dismissByUser: (id: string) => void;
@@ -91,56 +91,55 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         setNotifications((prev) => prev.filter((n) => n.id !== id));
       },
       publishNewVersion: (id, changes) => {
-        setNotifications((prev) => {
-          const updatedList = prev.map((n): Notification => {
-            if (n.id !== id) return n;
-            const now = new Date().toISOString();
-            const nextVersion = n.version + 1;
-            const newVersionEntry: NotifVersion = {
-              version: nextVersion,
-              timestamp: now,
-              note: changes.note || "Updated by Admin.",
-              title: changes.title,
-              message: changes.message,
-            };
-            return {
-              ...n,
-              title: changes.title,
-              message: changes.message,
-              source: changes.source,
-              priority: changes.priority,
-              category: changes.category,
-              version: nextVersion,
-              updated: true,
-              whatsChanged: changes.note,
-              publishedAt: now,
-              status: "Active",
-              versions: [newVersionEntry, ...n.versions],
-              // republish resets user-side ack/read if resending
-              acknowledgedByUser: changes.resendToReaders
-                ? false
-                : n.acknowledgedByUser,
-              readByUser: changes.resendToReaders ? false : n.readByUser,
-              dismissedByUser: changes.resendToReaders
-                ? false
-                : n.dismissedByUser,
-              delivery: {
-                ...n.delivery,
-                read: changes.resendToReaders ? 0 : n.delivery.read,
-                acknowledged: changes.resendToReaders
-                  ? 0
-                  : n.delivery.acknowledged,
-                unread: changes.resendToReaders
-                  ? n.delivery.total
-                  : n.delivery.unread,
-              },
-            };
-          });
-          // An updated notification becomes the newest, so bubble it to the top.
-          const moved = updatedList.find((n) => n.id === id);
-          if (!moved) return updatedList;
-          return [moved, ...updatedList.filter((n) => n.id !== id)];
-        });
+        const current = notifications.find((n) => n.id === id);
+        if (!current) return undefined;
+        const now = new Date().toISOString();
+        const nextVersion = current.version + 1;
+        const newVersionEntry: NotifVersion = {
+          version: nextVersion,
+          timestamp: now,
+          note: changes.note || "Updated by Admin.",
+          title: changes.title,
+          message: changes.message,
+        };
+        const updated: Notification = {
+          ...current,
+          title: changes.title,
+          message: changes.message,
+          source: changes.source,
+          priority: changes.priority,
+          category: changes.category,
+          version: nextVersion,
+          updated: true,
+          whatsChanged: changes.note,
+          publishedAt: now,
+          status: "Active",
+          versions: [newVersionEntry, ...current.versions],
+          // republish resets user-side ack/read if resending
+          acknowledgedByUser: changes.resendToReaders
+            ? false
+            : current.acknowledgedByUser,
+          readByUser: changes.resendToReaders ? false : current.readByUser,
+          dismissedByUser: changes.resendToReaders
+            ? false
+            : current.dismissedByUser,
+          delivery: {
+            ...current.delivery,
+            read: changes.resendToReaders ? 0 : current.delivery.read,
+            acknowledged: changes.resendToReaders
+              ? 0
+              : current.delivery.acknowledged,
+            unread: changes.resendToReaders
+              ? current.delivery.total
+              : current.delivery.unread,
+          },
+        };
+        // An updated notification becomes the newest, so bubble it to the top.
+        setNotifications((prev) => [
+          updated,
+          ...prev.filter((n) => n.id !== id),
+        ]);
+        return updated;
       },
       markReadByUser: (id) => {
         setNotifications((prev) =>

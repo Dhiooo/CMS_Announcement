@@ -78,7 +78,14 @@ export function AdminApp() {
         <EditScreen
           id={view.id}
           onCancel={(id) => setView({ name: "detail", id })}
-          onPublished={(id) => setView({ name: "detail", id })}
+          onPublished={(n) => {
+            setView({ name: "detail", id: n.id });
+            // Updated announcements pop up on the user's screen again,
+            // just like a first-time publish.
+            if (n.type === "Announcement" && n.status !== "Draft") {
+              setTimeout(() => setAck(n), 2000);
+            }
+          }}
         />
       )}
 

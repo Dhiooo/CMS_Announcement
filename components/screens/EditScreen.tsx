@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { IconChevronLeft, IconTrendingUp } from "@/components/icons";
 import { useStore } from "@/lib/store";
-import type { Priority } from "@/lib/types";
+import type { Notification, Priority } from "@/lib/types";
 
 export function EditScreen({
   id,
@@ -12,7 +12,7 @@ export function EditScreen({
 }: {
   id: string;
   onCancel: (id: string) => void;
-  onPublished: (id: string) => void;
+  onPublished: (n: Notification) => void;
 }) {
   const { getById, publishNewVersion } = useStore();
   const n = getById(id);
@@ -41,7 +41,7 @@ export function EditScreen({
   const nextVersion = n.version + 1;
 
   function publish() {
-    publishNewVersion(n!.id, {
+    const updated = publishNewVersion(n!.id, {
       title,
       message,
       source,
@@ -50,7 +50,7 @@ export function EditScreen({
       note: note || "Updated by Admin.",
       resendToReaders: resend,
     });
-    onPublished(n!.id);
+    onPublished(updated ?? n!);
   }
 
   return (
