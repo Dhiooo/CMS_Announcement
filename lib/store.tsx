@@ -92,7 +92,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       },
       publishNewVersion: (id, changes) => {
         setNotifications((prev) => {
-          const updatedList = prev.map((n) => {
+          const updatedList = prev.map((n): Notification => {
             if (n.id !== id) return n;
             const now = new Date().toISOString();
             const nextVersion = n.version + 1;
